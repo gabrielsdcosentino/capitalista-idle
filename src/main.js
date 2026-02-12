@@ -1,3 +1,4 @@
+import { AdMob, RewardAdPluginEvents } from '@capacitor-community/admob';
 // --- CONFIGURAÇÃO (DATA) ---
 const CONFIG_NEGOCIOS = [
   { id: 'limonada', nome: 'Limonada', custoBase: 10, receitaBase: 1, tempoMs: 1000 },
@@ -216,10 +217,31 @@ window.fecharModalOffline = function() {
     document.getElementById('modal-offline').style.display = 'none';
     renderizarDinheiro();
 };
-window.dobrarLucroOffline = function() {
-    alert("Anúncio Simulado: Dobrando Ganhos!");
-    lucroPendente *= 2;
-    window.fecharModalOffline();
+window.dobrarLucroOffline = async function() {
+    // Escuta se o usuário assistiu até o fim
+    const ouvinte = await AdMob.addListener(RewardAdPluginEvents.Rewarded, (reward) => {
+        // O vídeo acabou e deu tudo certo!
+        lucroPendente *= 2;
+        window.fecharModalOffline();
+        alert("💰 Bônus Recebido: Lucro Dobrado!");
+        
+        // Prepara o próximo
+        AdMob.prepareRewardVideoAd({
+            adId: 'ca-app-pub-3940256099942544/5224354917'
+        });
+    });
+
+    // Tenta mostrar o anúncio
+    try {
+        await AdMob.showRewardVideoAd();
+    } catch (e) {
+        console.error(e);
+        alert("O anúncio falhou em carregar. (Tente de novo em 5s)");
+        // Se falhar, tenta carregar de novo para a próxima
+        AdMob.prepareRewardVideoAd({
+             adId: 'ca-app-pub-3940256099942544/5224354917'
+        });
+    }
 };
 
 // --- LOJA & INVESTIDORES ---
@@ -292,6 +314,16 @@ function confirmarReset(novos) {
 // --- START ---
 window.cliqueManual = cliqueManual;
 window.tentarComprar = comprarNegocio;
+// INICIALIZA OS ADS (NOVO)
+AdMob.initialize({
+  requestTrackingAuthorization: true,
+  initializeForTesting: true, // Importante para testes
+});
+
+// Prepara o primeiro anúncio para não demorar quando clicar
+AdMob.prepareRewardVideoAd({
+  adId: 'ca-app-pub-3940256099942544/5224354917' // ID de Vídeo Premiado de Teste
+});
 
 carregarJogo();
 aplicarEfeitosUpgrades();
