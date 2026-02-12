@@ -8,11 +8,16 @@
 </head>
 <body>
     <div id="app">
-        <header>
-            <h1>O Seu Império</h1>
-            <div id="display-dinheiro">R$ 0,00</div>
-        </header>
-
+       <header>
+    <h1>O Seu Império</h1>
+    <div class="placar-container">
+        <div id="display-dinheiro" class="placar">R$ 0,00</div>
+        <div id="display-diamantes" class="placar diamante" onclick="abrirLoja()">
+            💎 0
+            <span style="font-size: 0.6rem; vertical-align: middle; opacity: 0.7;">(Loja)</span>
+        </div>
+    </div>
+</header>
         <div id="area-scroll">
             <button id="btn-clique" class="btn-manual" onclick="window.cliqueManual()">Trabalhar (+R$ 1)</button>
             
@@ -45,6 +50,42 @@
         <button class="btn-fechar" onclick="fecharModalOffline()">
             Receber Normal
         </button>
+    </div>
+</div>
+<div id="modal-loja" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2>Loja Premium</h2>
+            <button onclick="fecharLoja()" style="background:none; border:none; color:white; font-size:1.5rem;">✕</button>
+        </div>
+
+        <h3>Impulsos</h3>
+        <div class="shop-item" onclick="comprarItem('avanco_1h')">
+            <div class="desc">
+                <b>Salto no Tempo</b><br>
+                <small>Adianta 1 hora de lucros</small>
+            </div>
+            <div class="price">💎 10</div>
+        </div>
+
+        <hr style="border-color: #444; margin: 15px 0;">
+
+        <h3>Comprar Diamantes</h3>
+        <div class="shop-item real-money" onclick="simularCompraReal('pack_p')">
+            <div class="desc">
+                <b>Mão Cheia</b><br>
+                <small>+50 Diamantes</small>
+            </div>
+            <div class="price">R$ 4,90</div>
+        </div>
+
+        <div class="shop-item real-money" onclick="simularCompraReal('pack_g')">
+            <div class="desc">
+                <b>Saco de Joias</b><br>
+                <small>+500 Diamantes</small>
+            </div>
+            <div class="price">R$ 29,90</div>
+        </div>
     </div>
 </div>
     <script type="module" src="/src/main.js"></script>

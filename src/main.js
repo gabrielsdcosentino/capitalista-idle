@@ -9,8 +9,9 @@ const CONFIG_NEGOCIOS = [
 // --- ESTADO DO JOGO (STATE) ---
 let jogo = {
   dinheiro: 0,
+  diamantes: 0, // <--- NOVO
   negocios: {},
-  upgrades: [] 
+  upgrades: []
 };
 
 // Inicializa o estado base
@@ -125,6 +126,12 @@ const elDinheiro = document.getElementById('display-dinheiro');
 
 function renderizarDinheiro() {
   elDinheiro.innerText = jogo.dinheiro.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  // Atualiza o contador de diamantes se ele existir
+  const elDiamante = document.getElementById('display-diamantes');
+  if (elDiamante) {
+     // Mantém o ícone e o texto (Loja)
+     elDiamante.innerHTML = `💎 ${jogo.diamantes} <span style="font-size: 0.6rem; vertical-align: middle; opacity: 0.7;">(Loja)</span>`;
+  }
 }
 
 function criarInterface() {
@@ -233,6 +240,52 @@ window.dobrarLucroOffline = function() {
     lucroPendente *= 2; // Dobra o valor!
     window.fecharModalOffline();
 };
+// --- SISTEMA DE LOJA ---
+window.abrirLoja = function() {
+    document.getElementById('modal-loja').style.display = 'flex';
+}
+
+window.fecharLoja = function() {
+    document.getElementById('modal-loja').style.display = 'none';
+}
+
+window.simularCompraReal = function(pacote) {
+    // AQUI ENTRARIA O GOOGLE PLAY BILLING
+    // Por enquanto, simulamos que o cartão passou
+    if (pacote === 'pack_p') jogo.diamantes += 50;
+    if (pacote === 'pack_g') jogo.diamantes += 500;
+
+    alert("✅ Pagamento Aprovado! (Simulação)");
+    renderizarDinheiro();
+    guardarJogo();
+}
+
+window.comprarItem = function(item) {
+    if (item === 'avanco_1h') {
+        if (jogo.diamantes >= 10) {
+            jogo.diamantes -= 10;
+
+            // Lógica do Salto no Tempo:
+            // Calcula quanto ganharia em 3600 segundos (1 hora)
+            let ganhoTotal = 0;
+            CONFIG_NEGOCIOS.forEach(n => {
+                const qtd = jogo.negocios[n.id];
+                if (qtd > 0) {
+                     // Receita por ms * 3.600.000 ms
+                     ganhoTotal += (n.receitaBase * qtd / n.tempoMs) * 3600000;
+                }
+            });
+
+            jogo.dinheiro += ganhoTotal;
+            alert(`⏳ VRUM! Você avançou no tempo e ganhou ${ganhoTotal.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}`);
+
+            renderizarDinheiro();
+            guardarJogo();
+        } else {
+            alert("💎 Diamantes insuficientes!");
+        }
+    }
+}
 
 // --- INICIALIZAÇÃO ---
 window.cliqueManual = cliqueManual;
