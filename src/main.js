@@ -144,9 +144,8 @@ function atualizarInterface() {
 }
 
 // --- INICIALIZAÇÃO ---
-// Expõe função global para o HTML acessar
+window.cliqueManual = cliqueManual; // <--- Isso conecta o botão do HTML à função JS
 window.tentarComprar = comprarNegocio;
-document.getElementById('btn-clique').addEventListener('click', cliqueManual);
 
 carregarJogo();
 criarInterface();
