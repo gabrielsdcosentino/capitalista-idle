@@ -32,6 +32,21 @@
             <br><br> 
         </div>
     </div>
+    <div id="modal-offline" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <h2>Bem-vindo de volta, Chefe!</h2>
+        <p>Enquanto você descansava, sua empresa rendeu:</p>
+        <h1 id="valor-offline" style="color: #4CAF50; margin: 20px 0;">R$ 0,00</h1>
+        
+        <button id="btn-dobrar" class="btn-ad" onclick="dobrarLucroOffline()">
+            📺 Assistir Anúncio (x2)
+        </button>
+        
+        <button class="btn-fechar" onclick="fecharModalOffline()">
+            Receber Normal
+        </button>
+    </div>
+</div>
     <script type="module" src="/src/main.js"></script>
 </body>
 </html>

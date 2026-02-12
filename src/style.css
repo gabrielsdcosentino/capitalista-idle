@@ -119,3 +119,47 @@ h1 { margin: 0; font-size: 1.2rem; opacity: 0.7; }
 .btn-upgrade.comprado {
     display: none !important; /* Força o desaparecimento */
 }
+/* --- MODAL (Janela Flutuante) --- */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.85); /* Fundo escuro */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+}
+
+.modal-content {
+    background: #2a2a2a;
+    padding: 30px;
+    border-radius: 15px;
+    text-align: center;
+    width: 80%;
+    max-width: 400px;
+    border: 1px solid #444;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.btn-ad {
+    background: #FFC107; /* Amarelo Ouro */
+    color: #000;
+    border: none;
+    padding: 15px;
+    width: 100%;
+    font-weight: bold;
+    font-size: 1.1rem;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    cursor: pointer;
+}
+
+.btn-fechar {
+    background: transparent;
+    border: 2px solid #555;
+    color: #aaa;
+    padding: 10px;
+    width: 100%;
+    border-radius: 8px;
+    cursor: pointer;
+}

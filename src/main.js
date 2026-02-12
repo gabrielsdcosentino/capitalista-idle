@@ -20,6 +20,7 @@ CONFIG_NEGOCIOS.forEach(n => {
 
 // --- SISTEMA DE SAVE ---
 function guardarJogo() {
+  jogo.ultimoLogin = Date.now(); // Salva a hora exata (em milissegundos)
   localStorage.setItem('save_capitalista', JSON.stringify(jogo));
 }
 
@@ -178,16 +179,70 @@ function atualizarInterface() {
     }
   });
 }
+// --- SISTEMA OFFLINE ---
+let lucroPendente = 0;
+
+function calcularGanhosOffline() {
+    if (!jogo.ultimoLogin) return;
+
+    const agora = Date.now();
+    const tempoAusente = agora - jogo.ultimoLogin; // Diferença em ms
+    
+    // Se ficou menos de 10 segundos fora, nem mostra
+    if (tempoAusente < 10000) return; 
+
+    // Calcula quanto cada negócio renderia nesse tempo
+    let totalGanho = 0;
+    
+    CONFIG_NEGOCIOS.forEach(n => {
+        const qtd = jogo.negocios[n.id];
+        if (qtd > 0) {
+            // Regra simples: (Lucro por ms) * (Tempo Ausente)
+            const receitaTotal = n.receitaBase * qtd; // Receita por ciclo
+            const ganhoPorMs = receitaTotal / n.tempoMs;
+            
+            totalGanho += ganhoPorMs * tempoAusente;
+        }
+    });
+    
+    // Se ganhou algo, mostra o modal
+    if (totalGanho > 1) {
+        lucroPendente = totalGanho;
+        abrirModalOffline(totalGanho);
+    }
+}
+
+function abrirModalOffline(valor) {
+    document.getElementById('valor-offline').innerText = valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    document.getElementById('modal-offline').style.display = 'flex';
+}
+
+// Funções globais para os botões do HTML
+window.fecharModalOffline = function() {
+    jogo.dinheiro += lucroPendente;
+    renderizarDinheiro();
+    document.getElementById('modal-offline').style.display = 'none';
+    lucroPendente = 0;
+};
+
+window.dobrarLucroOffline = function() {
+    // AQUI ENTRARIA O CÓDIGO DO ADMOB (ANÚNCIO)
+    // Por enquanto, simulamos que o anúncio foi visto
+    alert("Simulando Anúncio... (Você ganharia dinheiro real aqui)");
+    
+    lucroPendente *= 2; // Dobra o valor!
+    window.fecharModalOffline();
+};
 
 // --- INICIALIZAÇÃO ---
 window.cliqueManual = cliqueManual;
 window.tentarComprar = comprarNegocio;
 
-carregarJogo();          // 1. Carrega o Save
-aplicarEfeitosUpgrades(); // 2. Aplica matemática (x2) se tiver upgrades salvos
-criarInterface();        // 3. Cria o HTML
+carregarJogo();          
+aplicarEfeitosUpgrades(); 
+calcularGanhosOffline(); // <--- NOVA LINHA: Calcula o dinheiro assim que abre!
+criarInterface();       
 
-// 4. Esconde botões de upgrade já comprados
 if (jogo.upgrades.includes('limao_x2')) {
     const btn = document.getElementById('upg-limao');
     if(btn) btn.classList.add('comprado');
