@@ -1,4 +1,19 @@
 import { AdMob, RewardAdPluginEvents } from '@capacitor-community/admob';
+// Função para formatar números grandes (ex: 1.5M, 3.2B)
+function formatarDinheiro(valor) {
+  if (valor < 1000) return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  
+  const sufixos = ["", "K", "M", "B", "T", "Qa", "Qi"];
+  const sufixoNum = Math.floor(("" + Math.floor(valor)).length / 3);
+  
+  if (sufixoNum === 0) return valor;
+  
+  let curto = parseFloat((sufixoNum != 0 ? (valor / Math.pow(1000, sufixoNum)) : valor).toPrecision(3));
+  if (curto % 1 != 0) {
+      curto = curto.toFixed(1);
+  }
+  return "R$ " + curto + sufixos[sufixoNum];
+}
 
 // --- CONFIGURAÇÃO (DATA) ---
 const CONFIG_NEGOCIOS = [
@@ -123,7 +138,7 @@ const elDinheiro = document.getElementById('display-dinheiro');
 const elDiamante = document.getElementById('qtd-diamantes');
 
 function renderizarDinheiro() {
-  elDinheiro.innerText = jogo.dinheiro.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  elDinheiro.innerText = formatarDinheiro(jogo.dinheiro);
   if(elDiamante) elDiamante.innerText = jogo.diamantes;
 }
 
@@ -170,7 +185,9 @@ function atualizarInterface() {
     const custo = calcularCusto(n.id);
     const qtd = jogo.negocios[n.id];
     const receitaReal = n.receitaBase * (qtd || 1) * bonusAnjos;
-    
+  
+    document.getElementById(`rec-${n.id}`).innerText = `${formatarDinheiro(receitaReal)}/s`;
+    document.getElementById(`custo-${n.id}`).innerText = formatarDinheiro(custo);
     document.getElementById(`qtd-${n.id}`).innerText = qtd;
     document.getElementById(`rec-${n.id}`).innerText = `${receitaReal.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}/s`;
     document.getElementById(`custo-${n.id}`).innerText = custo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
