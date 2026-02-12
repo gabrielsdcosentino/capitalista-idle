@@ -11,16 +11,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout do Código
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4       # Atualizado para v4
 
       - name: Configurar Java 17
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4     # Atualizado para v4
         with:
           distribution: 'zulu'
           java-version: '17'
 
       - name: Configurar Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4     # Atualizado para v4
         with:
           node-version: '18'
 
@@ -39,7 +39,7 @@ jobs:
           ./gradlew assembleDebug
 
       - name: Upload do APK
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4  # Atualizado para v4 (A correção principal)
         with:
           name: capitalista-app-debug
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: android/app/build/outputs/apk/debug/app-debug.apkgit add .
