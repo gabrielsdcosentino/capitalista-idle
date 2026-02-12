@@ -1,5 +1,4 @@
 // --- CONFIGURAÇÃO (DATA) ---
-// Adicione novos negócios aqui e eles aparecerão automaticamente
 const CONFIG_NEGOCIOS = [
   { id: 'limonada', nome: 'Limonada', custoBase: 10, receitaBase: 1, tempoMs: 1000 },
   { id: 'jornal', nome: 'Entrega de Jornal', custoBase: 60, receitaBase: 4, tempoMs: 3000 },
@@ -11,15 +10,15 @@ const CONFIG_NEGOCIOS = [
 let jogo = {
   dinheiro: 0,
   negocios: {},
-  upgrades: [] // <--- NOVO: Lista de IDs de upgrades comprados
+  upgrades: [] 
 };
 
-// Inicializa o estado com 0 para cada negócio
+// Inicializa o estado base
 CONFIG_NEGOCIOS.forEach(n => {
   jogo.negocios[n.id] = 0;
 });
 
-// --- SISTEMA DE SAVE (PERSISTÊNCIA) ---
+// --- SISTEMA DE SAVE ---
 function guardarJogo() {
   localStorage.setItem('save_capitalista', JSON.stringify(jogo));
 }
@@ -28,7 +27,6 @@ function carregarJogo() {
   const save = localStorage.getItem('save_capitalista');
   if (save) {
     const dadosSalvos = JSON.parse(save);
-    // Mescla o save com o estado atual (para evitar bugs se adicionar novos negócios)
     jogo = { ...jogo, ...dadosSalvos };
   }
 }
@@ -37,7 +35,6 @@ function carregarJogo() {
 function calcularCusto(id) {
   const config = CONFIG_NEGOCIOS.find(n => n.id === id);
   const qtd = jogo.negocios[id];
-  // Fórmula: Custo * 1.15 ^ Quantidade
   return config.custoBase * Math.pow(1.15, qtd);
 }
 
@@ -53,15 +50,38 @@ function comprarNegocio(id) {
 
 function cliqueManual() {
   jogo.dinheiro += 1;
-  atualizarInterface(); // Atualiza apenas texto, sem redesenhar tudo
   renderizarDinheiro();
 }
 
-// --- GAME LOOP (MOTOR) ---
-let ultimoTempo = 0;
-let acumuladorTempo = {}; // Guarda o tempo decorrido para cada negócio
+// --- UPGRADES ---
+window.comprarUpgrade = function(tipo) {
+    if (tipo === 'limonada' && jogo.dinheiro >= 100 && !jogo.upgrades.includes('limao_x2')) {
+        jogo.dinheiro -= 100;
+        jogo.upgrades.push('limao_x2');
+        
+        aplicarEfeitosUpgrades(); // Aplica a matemática
+        document.getElementById('upg-limao').classList.add('comprado'); // Some o botão
+        
+        guardarJogo();
+        atualizarInterface();
+    }
+};
 
-// Inicializa acumuladores
+// Função para recalcular multiplicadores (usada ao carregar o jogo)
+function aplicarEfeitosUpgrades() {
+    if (jogo.upgrades.includes('limao_x2')) {
+        const limonada = CONFIG_NEGOCIOS.find(n => n.id === 'limonada');
+        // Garante que não multiplicamos infinitamente ao recarregar
+        if(limonada.receitaBase === 1) { 
+             limonada.receitaBase = 2; 
+        }
+    }
+}
+
+// --- GAME LOOP ---
+let ultimoTempo = 0;
+let acumuladorTempo = {};
+
 CONFIG_NEGOCIOS.forEach(n => acumuladorTempo[n.id] = 0);
 
 function loop(tempoAtual) {
@@ -75,23 +95,18 @@ function loop(tempoAtual) {
     if (qtd > 0) {
       acumuladorTempo[negocio.id] += delta;
       
-      // 1. Lógica do Dinheiro
       if (acumuladorTempo[negocio.id] >= negocio.tempoMs) {
         const ciclos = Math.floor(acumuladorTempo[negocio.id] / negocio.tempoMs);
         jogo.dinheiro += (negocio.receitaBase * qtd) * ciclos;
         acumuladorTempo[negocio.id] %= negocio.tempoMs;
       }
 
-      // 2. Lógica Visual (Barra de Progresso)
       const elementoBarra = document.getElementById(`bar-${negocio.id}`);
       if (elementoBarra) {
-        // Calcula a porcentagem (0 a 100)
         const porcentagem = (acumuladorTempo[negocio.id] / negocio.tempoMs) * 100;
-        // Aplica na largura
         elementoBarra.style.width = `${Math.min(porcentagem, 100)}%`;
       }
     } else {
-        // Se não tem o negócio, a barra fica vazia
         const elementoBarra = document.getElementById(`bar-${negocio.id}`);
         if(elementoBarra) elementoBarra.style.width = '0%';
     }
@@ -101,16 +116,13 @@ function loop(tempoAtual) {
   requestAnimationFrame(loop);
 }
 
-// Guarda o jogo a cada 5 segundos automaticamente
 setInterval(guardarJogo, 5000);
 
-
-// --- INTERFACE (UI) ---
+// --- INTERFACE ---
 const elLista = document.getElementById('lista-negocios');
 const elDinheiro = document.getElementById('display-dinheiro');
 
 function renderizarDinheiro() {
-  // Formata para moeda brasileira
   elDinheiro.innerText = jogo.dinheiro.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
@@ -121,7 +133,6 @@ function criarInterface() {
     div.className = 'business-card';
     div.id = `card-${n.id}`;
     
-    // Layout: Coluna da esquerda (Info + Barra) e Botão na direita
     div.innerHTML = `
       <div style="flex: 1; margin-right: 10px;">
         <div class="info">
@@ -129,12 +140,10 @@ function criarInterface() {
           <p>Possui: <span id="qtd-${n.id}">0</span></p>
           <p>Receita: ${n.receitaBase.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}</p>
         </div>
-        
         <div class="progresso-container">
             <div id="bar-${n.id}" class="progresso-fill"></div>
         </div>
       </div>
-
       <button class="btn-compra" onclick="window.tentarComprar('${n.id}')">
         Comprar<br>
         <small id="custo-${n.id}">---</small>
@@ -148,21 +157,15 @@ function atualizarInterface() {
   CONFIG_NEGOCIOS.forEach(n => {
     const custo = calcularCusto(n.id);
     const qtd = jogo.negocios[n.id];
-    
-    // CORREÇÃO AQUI: Mostra o lucro real (Qtd * ReceitaBase)
-    const receitaTotal = n.receitaBase * (qtd || 1); // Se for 0, mostra a base como previsão
+    const receitaTotal = n.receitaBase * (qtd || 1);
     
     document.getElementById(`qtd-${n.id}`).innerText = qtd;
     document.getElementById(`custo-${n.id}`).innerText = custo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     
-    // Atualiza o texto da receita também!
-    // Precisamos achar o elemento <p> que tem a receita. 
-    // Como não demos ID pra ele antes, vamos usar o querySelector no card.
     const card = document.getElementById(`card-${n.id}`);
-    const pReceita = card.querySelector('.info p:nth-child(3)'); // Pega o terceiro parágrafo
+    const pReceita = card.querySelector('.info p:nth-child(3)');
     pReceita.innerText = `Receita: ${receitaTotal.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}/ciclo`;
 
-    // Lógica do Botão (Visual)
     const btn = card.querySelector('.btn-compra');
     if (jogo.dinheiro >= custo) {
       btn.classList.add('pode-comprar');
@@ -170,33 +173,25 @@ function atualizarInterface() {
       btn.disabled = false;
     } else {
       btn.classList.remove('pode-comprar');
-      btn.classList.add('bloqueado'); // Adicione isso no CSS se quiser que fique cinza escuro
-      btn.disabled = true; // Impede o clique
+      btn.classList.add('bloqueado');
+      btn.disabled = true;
     }
   });
 }
-window.comprarUpgrade = function(tipo) {
-    if (tipo === 'limonada' && jogo.dinheiro >= 100 && !jogo.upgrades.includes('limao_x2')) {
-        jogo.dinheiro -= 100;
-        jogo.upgrades.push('limao_x2');
-
-        // Aplica visualmente
-        document.getElementById('upg-limao').classList.add('comprado');
-
-        // Dobra a receita da limonada na configuração!
-        const limonada = CONFIG_NEGOCIOS.find(n => n.id === 'limonada');
-        limonada.receitaBase *= 2; 
-
-        atualizarInterface();
-        guardarJogo();
-    }
-};
 
 // --- INICIALIZAÇÃO ---
-window.cliqueManual = cliqueManual; // <--- Isso conecta o botão do HTML à função JS
+window.cliqueManual = cliqueManual;
 window.tentarComprar = comprarNegocio;
 
-carregarJogo();
-criarInterface();
+carregarJogo();          // 1. Carrega o Save
+aplicarEfeitosUpgrades(); // 2. Aplica matemática (x2) se tiver upgrades salvos
+criarInterface();        // 3. Cria o HTML
+
+// 4. Esconde botões de upgrade já comprados
+if (jogo.upgrades.includes('limao_x2')) {
+    const btn = document.getElementById('upg-limao');
+    if(btn) btn.classList.add('comprado');
+}
+
 atualizarInterface();
 requestAnimationFrame(loop);
