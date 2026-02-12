@@ -14,13 +14,13 @@ jobs:
       - name: Checkout do Código
         uses: actions/checkout@v4
 
-      - name: Configurar Java 17
+      - name: Configurar Java 21 (Correção Final)
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: '17'
+          java-version: '21'   # <--- MUDAMOS DE 17 PARA 21 AQUI
 
-      - name: Configurar Node.js 22 (Correção)
+      - name: Configurar Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: '22'
