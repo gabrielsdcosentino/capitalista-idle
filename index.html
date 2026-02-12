@@ -1,13 +1,24 @@
-<!doctype html>
-<html lang="en">
-  <head>
+<!DOCTYPE html>
+<html lang="pt">
+<head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>capitalista-idle</title>
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.js"></script>
-  </body>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Idle Capitalist</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <header>
+            <h1>O Seu Império</h1>
+            <div id="display-dinheiro">R$ 0,00</div>
+        </header>
+
+        <div id="area-scroll">
+            <button id="btn-clique" class="btn-manual" onclick="window.cliqueManual()">Trabalhar (+R$ 1)</button>
+
+            <div id="lista-negocios"></div>
+        </div>
+    </div>
+    <script type="module" src="/main.js"></script>
+</body>
 </html>
