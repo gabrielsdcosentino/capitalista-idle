@@ -4,32 +4,38 @@ const CONFIG_NEGOCIOS = [
   { id: 'jornal', nome: 'Entrega de Jornal', custoBase: 60, receitaBase: 4, tempoMs: 3000 },
   { id: 'lava_jato', nome: 'Lava Jato', custoBase: 700, receitaBase: 15, tempoMs: 6000 },
   { id: 'pizzaria', nome: 'Pizzaria', custoBase: 2500, receitaBase: 50, tempoMs: 12000 },
+  { id: 'donut', nome: 'Loja de Donuts', custoBase: 10000, receitaBase: 200, tempoMs: 20000 },
 ];
 
 // --- ESTADO DO JOGO (STATE) ---
 let jogo = {
   dinheiro: 0,
-  diamantes: 0, // <--- NOVO
+  dinheiroTotal: 0, // Acumulado para Investidores
+  investidores: 0,
+  diamantes: 0,
+  ultimoLogin: Date.now(),
   negocios: {},
-  upgrades: []
+  upgrades: [] 
 };
 
-// Inicializa o estado base
-CONFIG_NEGOCIOS.forEach(n => {
-  jogo.negocios[n.id] = 0;
-});
+// Inicializa zeros
+CONFIG_NEGOCIOS.forEach(n => { jogo.negocios[n.id] = 0; });
 
-// --- SISTEMA DE SAVE ---
+// --- PERSISTÊNCIA ---
 function guardarJogo() {
-  jogo.ultimoLogin = Date.now(); // Salva a hora exata (em milissegundos)
+  jogo.ultimoLogin = Date.now();
   localStorage.setItem('save_capitalista', JSON.stringify(jogo));
 }
 
 function carregarJogo() {
   const save = localStorage.getItem('save_capitalista');
   if (save) {
-    const dadosSalvos = JSON.parse(save);
-    jogo = { ...jogo, ...dadosSalvos };
+    const dados = JSON.parse(save);
+    jogo = { ...jogo, ...dados };
+    // Migração de saves antigos
+    if (!jogo.investidores) jogo.investidores = 0;
+    if (!jogo.dinheiroTotal) jogo.dinheiroTotal = jogo.dinheiro;
+    if (!jogo.diamantes) jogo.diamantes = 0;
   }
 }
 
@@ -51,39 +57,14 @@ function comprarNegocio(id) {
 }
 
 function cliqueManual() {
-  jogo.dinheiro += 1;
+  // Investidores também aumentam o clique manual? Geralmente não, mas vamos dar um bônus fixo
+  jogo.dinheiro += 1 + Math.floor(jogo.investidores * 0.1); 
   renderizarDinheiro();
-}
-
-// --- UPGRADES ---
-window.comprarUpgrade = function(tipo) {
-    if (tipo === 'limonada' && jogo.dinheiro >= 100 && !jogo.upgrades.includes('limao_x2')) {
-        jogo.dinheiro -= 100;
-        jogo.upgrades.push('limao_x2');
-        
-        aplicarEfeitosUpgrades(); // Aplica a matemática
-        document.getElementById('upg-limao').classList.add('comprado'); // Some o botão
-        
-        guardarJogo();
-        atualizarInterface();
-    }
-};
-
-// Função para recalcular multiplicadores (usada ao carregar o jogo)
-function aplicarEfeitosUpgrades() {
-    if (jogo.upgrades.includes('limao_x2')) {
-        const limonada = CONFIG_NEGOCIOS.find(n => n.id === 'limonada');
-        // Garante que não multiplicamos infinitamente ao recarregar
-        if(limonada.receitaBase === 1) { 
-             limonada.receitaBase = 2; 
-        }
-    }
 }
 
 // --- GAME LOOP ---
 let ultimoTempo = 0;
 let acumuladorTempo = {};
-
 CONFIG_NEGOCIOS.forEach(n => acumuladorTempo[n.id] = 0);
 
 function loop(tempoAtual) {
@@ -93,24 +74,30 @@ function loop(tempoAtual) {
 
   CONFIG_NEGOCIOS.forEach(negocio => {
     const qtd = jogo.negocios[negocio.id];
-    
     if (qtd > 0) {
       acumuladorTempo[negocio.id] += delta;
       
       if (acumuladorTempo[negocio.id] >= negocio.tempoMs) {
         const ciclos = Math.floor(acumuladorTempo[negocio.id] / negocio.tempoMs);
-        jogo.dinheiro += (negocio.receitaBase * qtd) * ciclos;
+        
+        // FÓRMULA DE LUCRO: Base * Qtd * (1 + 2% por Anjo)
+        const bonusAnjos = 1 + (jogo.investidores * 0.02);
+        const lucro = (negocio.receitaBase * qtd * bonusAnjos) * ciclos;
+        
+        jogo.dinheiro += lucro;
+        jogo.dinheiroTotal += lucro; // Conta para o próximo anjo
         acumuladorTempo[negocio.id] %= negocio.tempoMs;
       }
 
-      const elementoBarra = document.getElementById(`bar-${negocio.id}`);
-      if (elementoBarra) {
-        const porcentagem = (acumuladorTempo[negocio.id] / negocio.tempoMs) * 100;
-        elementoBarra.style.width = `${Math.min(porcentagem, 100)}%`;
+      // Visual Barra
+      const bar = document.getElementById(`bar-${negocio.id}`);
+      if (bar) {
+        const pct = (acumuladorTempo[negocio.id] / negocio.tempoMs) * 100;
+        bar.style.width = `${Math.min(pct, 100)}%`;
       }
     } else {
-        const elementoBarra = document.getElementById(`bar-${negocio.id}`);
-        if(elementoBarra) elementoBarra.style.width = '0%';
+        const bar = document.getElementById(`bar-${negocio.id}`);
+        if(bar) bar.style.width = '0%';
     }
   });
 
@@ -123,15 +110,11 @@ setInterval(guardarJogo, 5000);
 // --- INTERFACE ---
 const elLista = document.getElementById('lista-negocios');
 const elDinheiro = document.getElementById('display-dinheiro');
+const elDiamante = document.getElementById('qtd-diamantes');
 
 function renderizarDinheiro() {
   elDinheiro.innerText = jogo.dinheiro.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  // Atualiza o contador de diamantes se ele existir
-  const elDiamante = document.getElementById('display-diamantes');
-  if (elDiamante) {
-     // Mantém o ícone e o texto (Loja)
-     elDiamante.innerHTML = `💎 ${jogo.diamantes} <span style="font-size: 0.6rem; vertical-align: middle; opacity: 0.7;">(Loja)</span>`;
-  }
+  if(elDiamante) elDiamante.innerText = jogo.diamantes;
 }
 
 function criarInterface() {
@@ -146,7 +129,7 @@ function criarInterface() {
         <div class="info">
           <h3>${n.nome}</h3>
           <p>Possui: <span id="qtd-${n.id}">0</span></p>
-          <p>Receita: ${n.receitaBase.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}</p>
+          <p>Receita: <span id="rec-${n.id}">R$ 0,00</span></p>
         </div>
         <div class="progresso-container">
             <div id="bar-${n.id}" class="progresso-fill"></div>
@@ -162,144 +145,161 @@ function criarInterface() {
 }
 
 function atualizarInterface() {
+  const bonusAnjos = 1 + (jogo.investidores * 0.02);
+  
   CONFIG_NEGOCIOS.forEach(n => {
     const custo = calcularCusto(n.id);
     const qtd = jogo.negocios[n.id];
-    const receitaTotal = n.receitaBase * (qtd || 1);
+    const receitaReal = n.receitaBase * (qtd || 1) * bonusAnjos;
     
     document.getElementById(`qtd-${n.id}`).innerText = qtd;
+    document.getElementById(`rec-${n.id}`).innerText = `${receitaReal.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}/ciclo`;
     document.getElementById(`custo-${n.id}`).innerText = custo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     
-    const card = document.getElementById(`card-${n.id}`);
-    const pReceita = card.querySelector('.info p:nth-child(3)');
-    pReceita.innerText = `Receita: ${receitaTotal.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}/ciclo`;
-
-    const btn = card.querySelector('.btn-compra');
+    const btn = document.querySelector(`#card-${n.id} .btn-compra`);
     if (jogo.dinheiro >= custo) {
       btn.classList.add('pode-comprar');
       btn.classList.remove('bloqueado');
-      btn.disabled = false;
     } else {
       btn.classList.remove('pode-comprar');
-      btn.classList.add('bloqueado');
-      btn.disabled = true;
+      // btn.classList.add('bloqueado'); // Opcional: deixar cinza
     }
   });
 }
-// --- SISTEMA OFFLINE ---
-let lucroPendente = 0;
 
+// --- UPGRADES ---
+window.comprarUpgrade = function(tipo) {
+    if (tipo === 'limonada' && jogo.dinheiro >= 100 && !jogo.upgrades.includes('limao_x2')) {
+        jogo.dinheiro -= 100;
+        jogo.upgrades.push('limao_x2');
+        aplicarEfeitosUpgrades();
+        document.getElementById('upg-limao').classList.add('comprado');
+        atualizarInterface();
+    }
+};
+
+function aplicarEfeitosUpgrades() {
+    if (jogo.upgrades.includes('limao_x2')) {
+        const limonada = CONFIG_NEGOCIOS.find(n => n.id === 'limonada');
+        if(limonada.receitaBase === 1) limonada.receitaBase = 2; 
+    }
+}
+
+// --- OFFLINE EARNINGS ---
+let lucroPendente = 0;
 function calcularGanhosOffline() {
     if (!jogo.ultimoLogin) return;
+    const tempoAusente = Date.now() - jogo.ultimoLogin;
+    if (tempoAusente < 10000) return; // Mínimo 10s
 
-    const agora = Date.now();
-    const tempoAusente = agora - jogo.ultimoLogin; // Diferença em ms
-    
-    // Se ficou menos de 10 segundos fora, nem mostra
-    if (tempoAusente < 10000) return; 
+    let total = 0;
+    const bonusAnjos = 1 + (jogo.investidores * 0.02);
 
-    // Calcula quanto cada negócio renderia nesse tempo
-    let totalGanho = 0;
-    
     CONFIG_NEGOCIOS.forEach(n => {
         const qtd = jogo.negocios[n.id];
         if (qtd > 0) {
-            // Regra simples: (Lucro por ms) * (Tempo Ausente)
-            const receitaTotal = n.receitaBase * qtd; // Receita por ciclo
-            const ganhoPorMs = receitaTotal / n.tempoMs;
-            
-            totalGanho += ganhoPorMs * tempoAusente;
+            const receitaPorMs = (n.receitaBase * qtd * bonusAnjos) / n.tempoMs;
+            total += receitaPorMs * tempoAusente;
         }
     });
-    
-    // Se ganhou algo, mostra o modal
-    if (totalGanho > 1) {
-        lucroPendente = totalGanho;
-        abrirModalOffline(totalGanho);
+
+    if (total > 1) {
+        lucroPendente = total;
+        document.getElementById('valor-offline').innerText = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        document.getElementById('modal-offline').style.display = 'flex';
     }
 }
 
-function abrirModalOffline(valor) {
-    document.getElementById('valor-offline').innerText = valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    document.getElementById('modal-offline').style.display = 'flex';
-}
-
-// Funções globais para os botões do HTML
 window.fecharModalOffline = function() {
     jogo.dinheiro += lucroPendente;
-    renderizarDinheiro();
-    document.getElementById('modal-offline').style.display = 'none';
     lucroPendente = 0;
+    document.getElementById('modal-offline').style.display = 'none';
+    renderizarDinheiro();
 };
-
 window.dobrarLucroOffline = function() {
-    // AQUI ENTRARIA O CÓDIGO DO ADMOB (ANÚNCIO)
-    // Por enquanto, simulamos que o anúncio foi visto
-    alert("Simulando Anúncio... (Você ganharia dinheiro real aqui)");
-    
-    lucroPendente *= 2; // Dobra o valor!
+    alert("Anúncio Simulado: Dobrando Ganhos!");
+    lucroPendente *= 2;
     window.fecharModalOffline();
 };
-// --- SISTEMA DE LOJA ---
-window.abrirLoja = function() {
-    document.getElementById('modal-loja').style.display = 'flex';
-}
 
-window.fecharLoja = function() {
-    document.getElementById('modal-loja').style.display = 'none';
-}
+// --- LOJA & INVESTIDORES ---
+window.abrirModal = (id) => document.getElementById(id).style.display = 'flex';
+window.fecharModal = (id) => document.getElementById(id).style.display = 'none';
 
-window.simularCompraReal = function(pacote) {
-    // AQUI ENTRARIA O GOOGLE PLAY BILLING
-    // Por enquanto, simulamos que o cartão passou
-    if (pacote === 'pack_p') jogo.diamantes += 50;
-    if (pacote === 'pack_g') jogo.diamantes += 500;
-
-    alert("✅ Pagamento Aprovado! (Simulação)");
+window.simularCompraReal = (tipo) => {
+    if(tipo === 'p') jogo.diamantes += 50;
+    if(tipo === 'g') jogo.diamantes += 500;
+    alert("Compra realizada com sucesso!");
     renderizarDinheiro();
     guardarJogo();
-}
+};
 
-window.comprarItem = function(item) {
-    if (item === 'avanco_1h') {
-        if (jogo.diamantes >= 10) {
+window.comprarItem = (tipo) => {
+    if(tipo === 'avanco_1h') {
+        if(jogo.diamantes >= 10) {
             jogo.diamantes -= 10;
-
-            // Lógica do Salto no Tempo:
-            // Calcula quanto ganharia em 3600 segundos (1 hora)
-            let ganhoTotal = 0;
+            // Calcula 1h de ganhos
+            let ganho = 0;
+            const bonusAnjos = 1 + (jogo.investidores * 0.02);
             CONFIG_NEGOCIOS.forEach(n => {
                 const qtd = jogo.negocios[n.id];
-                if (qtd > 0) {
-                     // Receita por ms * 3.600.000 ms
-                     ganhoTotal += (n.receitaBase * qtd / n.tempoMs) * 3600000;
-                }
+                if(qtd > 0) ganho += (n.receitaBase * qtd * bonusAnjos / n.tempoMs) * 3600000;
             });
-
-            jogo.dinheiro += ganhoTotal;
-            alert(`⏳ VRUM! Você avançou no tempo e ganhou ${ganhoTotal.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}`);
-
+            jogo.dinheiro += ganho;
+            alert(`Salto no Tempo! Ganhou ${ganho.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}`);
             renderizarDinheiro();
             guardarJogo();
         } else {
-            alert("💎 Diamantes insuficientes!");
+            alert("Diamantes insuficientes!");
         }
+    }
+};
+
+window.abrirPainelInvestidores = () => {
+    // 1 Anjo a cada 1 Milhão acumulado (Raiz)
+    const anjosPossiveis = Math.floor(Math.sqrt(jogo.dinheiroTotal / 1000000));
+    const novos = Math.max(0, anjosPossiveis - jogo.investidores);
+    
+    document.getElementById('qtd-anjos-atuais').innerText = jogo.investidores;
+    document.getElementById('bonus-anjos-atual').innerText = Math.floor(jogo.investidores * 2) + "%";
+    document.getElementById('qtd-anjos-novos').innerText = novos;
+    
+    const btn = document.getElementById('btn-resetar');
+    if(novos > 0) {
+        btn.classList.remove('bloqueado');
+        btn.innerText = `Vender Empresa (+${novos} Anjos)`;
+        btn.onclick = () => confirmarReset(novos);
+    } else {
+        btn.classList.add('bloqueado');
+        btn.innerText = "Precisa lucrar mais";
+        btn.onclick = null;
+    }
+    window.abrirModal('modal-investidores');
+};
+
+function confirmarReset(novos) {
+    if(confirm("Tem certeza? Você perderá o dinheiro e negócios, mas ganhará bônus permanente.")) {
+        jogo.investidores += novos;
+        jogo.dinheiro = 0;
+        jogo.dinheiroTotal = 0; // Reseta o contador para o próximo marco
+        CONFIG_NEGOCIOS.forEach(n => jogo.negocios[n.id] = 0);
+        // Não resetamos diamantes nem upgrades permanentes
+        guardarJogo();
+        location.reload();
     }
 }
 
-// --- INICIALIZAÇÃO ---
+// --- START ---
 window.cliqueManual = cliqueManual;
 window.tentarComprar = comprarNegocio;
 
-carregarJogo();          
-aplicarEfeitosUpgrades(); 
-calcularGanhosOffline(); // <--- NOVA LINHA: Calcula o dinheiro assim que abre!
-criarInterface();       
-
-if (jogo.upgrades.includes('limao_x2')) {
-    const btn = document.getElementById('upg-limao');
-    if(btn) btn.classList.add('comprado');
+carregarJogo();
+aplicarEfeitosUpgrades();
+criarInterface();
+calcularGanhosOffline();
+if(jogo.upgrades.includes('limao_x2')) {
+    const b = document.getElementById('upg-limao');
+    if(b) b.classList.add('comprado');
 }
-
 atualizarInterface();
 requestAnimationFrame(loop);
