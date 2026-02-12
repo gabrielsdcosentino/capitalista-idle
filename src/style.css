@@ -1,18 +1,16 @@
 :root {
-  --bg-color: #0F172A;       /* Azul Noite Profundo */
-  --card-bg: #1E293B;        /* Azul Metálico Escuro */
-  --text-primary: #F8FAFC;   /* Branco Gelo */
-  --text-secondary: #94A3B8; /* Cinza Aço */
-  --accent: #10B981;         /* Verde Esmeralda (Lucro) */
-  --gold: #F59E0B;           /* Dourado (Premium) */
-  --danger: #EF4444;         /* Vermelho (Perigo/Reset) */
-  --btn-gradient: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+  --bg-color: #000000;         /* Preto OLED */
+  --card-bg: #1A1A1A;          /* Cinza Chumbo */
+  --accent: #00E676;           /* Verde Neon (Dinheiro) */
+  --upgrade: #651FFF;          /* Roxo Neon (Upgrades) */
+  --text-primary: #FFFFFF;
+  --text-secondary: #B0BEC5;
 }
 
 body {
   margin: 0;
   padding: 0;
-  font-family: 'Inter', 'Roboto', sans-serif; /* Fonte séria */
+  font-family: 'Roboto', sans-serif;
   background-color: var(--bg-color);
   color: var(--text-primary);
   user-select: none;
@@ -28,52 +26,48 @@ body {
   flex-direction: column;
 }
 
-/* --- HEADER FINANCEIRO --- */
+/* --- HEADER --- */
 header {
-  padding: 20px;
-  background: rgba(30, 41, 59, 0.8); /* Vidro fosco */
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid #334155;
+  padding: 15px;
+  background: #111;
+  border-bottom: 1px solid #333;
   text-align: center;
   z-index: 10;
 }
 
 h1 { 
     margin: 0; 
-    font-size: 0.75rem; 
+    font-size: 0.8rem; 
     text-transform: uppercase; 
-    letter-spacing: 3px; 
-    color: var(--text-secondary);
-    font-weight: 600;
+    letter-spacing: 2px; 
+    color: #666;
+    margin-bottom: 5px;
 }
 
 #display-dinheiro { 
     font-size: 2.5rem; 
-    font-weight: 700; 
+    font-weight: 800; 
     color: var(--text-primary); 
-    letter-spacing: -1px;
-    margin: 5px 0 15px 0;
+    margin: 0;
 }
 
 .placar-container {
     display: flex;
     justify-content: center;
-    gap: 12px;
+    gap: 10px;
+    margin-top: 10px;
 }
 
 .placar-secundario {
     font-size: 0.8rem;
-    padding: 6px 16px;
-    border-radius: 6px;
-    cursor: pointer;
-    background: #334155;
-    color: var(--text-secondary);
-    border: 1px solid #475569;
-    font-weight: 600;
-    transition: all 0.2s;
+    padding: 5px 12px;
+    border-radius: 20px;
+    background: #222;
+    border: 1px solid #333;
+    font-weight: bold;
 }
-.placar-secundario.diamante { color: #38BDF8; border-color: rgba(56, 189, 248, 0.3); }
-.placar-secundario.investidor { color: var(--gold); border-color: rgba(245, 158, 11, 0.3); }
+.placar-secundario.diamante { color: #00B0FF; }
+.placar-secundario.investidor { color: #FFD600; }
 
 /* --- ÁREA DE JOGO --- */
 #area-scroll {
@@ -83,152 +77,140 @@ h1 {
   padding-bottom: 100px;
 }
 
-/* Scrollbar fina e moderna */
-#area-scroll::-webkit-scrollbar { width: 4px; }
-#area-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
-
 .btn-manual {
-  background: var(--btn-gradient);
+  background: linear-gradient(45deg, #2962FF, #2979FF);
   border: none;
   color: white;
-  padding: 16px;
+  padding: 15px;
   width: 100%;
-  font-size: 1rem;
-  font-weight: 600;
-  border-radius: 8px;
-  margin-bottom: 25px;
-  cursor: pointer;
-  box-shadow: 0 4px 20px rgba(37, 99, 235, 0.3);
+  font-size: 1.1rem;
+  font-weight: bold;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 15px rgba(41, 98, 255, 0.4);
   text-transform: uppercase;
-  letter-spacing: 1px;
 }
-.btn-manual:active { transform: scale(0.98); opacity: 0.9; }
+.btn-manual:active { transform: scale(0.98); }
 
-/* --- CARTÕES CORPORATIVOS --- */
+/* --- UPGRADES (Corrigindo o botão branco feio) --- */
+.btn-upgrade {
+    background: var(--upgrade);
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 0.9rem;
+    box-shadow: 0 4px 10px rgba(101, 31, 255, 0.4);
+    min-width: 140px;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* --- CARTÕES --- */
 .business-card {
   background: var(--card-bg);
-  border-radius: 12px;
-  padding: 16px;
+  border-radius: 16px;
+  padding: 12px;
   margin-bottom: 12px;
   display: flex;
   align-items: center;
   gap: 15px;
-  border: 1px solid #334155; /* Borda sutil */
-  position: relative;
-  overflow: hidden;
+  border: 1px solid #333;
 }
 
-/* Ícone Minimalista */
+/* Ícone Colorido (Sem o cinza triste) */
 .business-icon {
-    width: 50px;
-    height: 50px;
-    font-size: 1.8rem;
-    background: #0F172A;
-    border-radius: 8px; /* Quadrado arredondado (App Icon style) */
+    width: 55px;
+    height: 55px;
+    font-size: 2rem;
+    background: #252525;
+    border-radius: 12px;
     display: flex;
     justify-content: center;
     align-items: center;
-    border: 1px solid #334155;
     flex-shrink: 0;
-    color: #64748B; /* Cinza quando bloqueado */
-    filter: grayscale(100%);
+    /* Removemos o grayscale para ficar vivo */
+    opacity: 0.5; /* Só um pouco transparente se não tiver comprado */
     transition: all 0.3s;
 }
 
-/* Desbloqueado */
+/* Quando desbloqueado */
 .business-card.desbloqueado {
-    border-color: #475569;
-    background: linear-gradient(to right, #1E293B, #252e3f);
+    border-color: #444;
+    background: #222;
 }
 .business-card.desbloqueado .business-icon {
-    filter: grayscale(0%);
-    border-color: var(--accent);
-    color: #FFF;
-    background: rgba(16, 185, 129, 0.1); /* Glow verde sutil */
+    opacity: 1;
+    background: #000;
+    border: 1px solid var(--accent);
+    box-shadow: 0 0 10px rgba(0, 230, 118, 0.2);
 }
 
-.info-container { flex: 1; min-width: 0; }
+.info-container { flex: 1; overflow: hidden; }
 
 .header-info {
     display: flex;
     justify-content: space-between;
-    align-items: baseline;
-    margin-bottom: 6px;
+    align-items: center;
+    margin-bottom: 5px;
 }
-.header-info h3 { 
-    margin: 0; 
-    font-size: 1rem; 
-    font-weight: 600; 
-    color: var(--text-primary);
-}
-.qtd-badge {
-    font-family: monospace; /* Fonte técnica para números */
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-}
-.business-card.desbloqueado .qtd-badge { color: var(--accent); }
+.header-info h3 { margin: 0; font-size: 1rem; color: #FFF; }
 
-/* BARRA DE PROGRESSO "SLIM" */
+.qtd-badge {
+    background: #333;
+    color: #FFF;
+    font-size: 0.8rem;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-weight: bold;
+}
+.business-card.desbloqueado .qtd-badge { background: var(--accent); color: #000; }
+
+/* Barra Neon */
 .progresso-container {
   width: 100%;
-  height: 4px; /* Super fina */
-  background-color: #0F172A;
-  border-radius: 2px;
-  overflow: hidden;
-  margin-bottom: 6px;
+  height: 6px;
+  background-color: #000;
+  border-radius: 3px;
+  margin-bottom: 5px;
 }
 .progresso-fill {
   height: 100%;
   background-color: var(--accent);
   width: 0%;
-  box-shadow: 0 0 10px var(--accent); /* Efeito Neon */
+  box-shadow: 0 0 8px var(--accent); /* Brilho Neon */
 }
 
-.stats-row p { 
-    margin: 0; 
-    font-size: 0.75rem; 
-    color: var(--text-secondary); 
-    display: flex;
-    justify-content: space-between;
-}
+.stats-row p { margin: 0; font-size: 0.8rem; color: #888; }
 
-/* BOTÃO DE COMPRA ESTILO "TRADE" */
+/* Botão de Compra Melhorado */
 .btn-compra {
-  background: #334155;
-  border: 1px solid #475569;
-  color: var(--text-secondary);
-  padding: 8px 12px;
-  border-radius: 6px;
-  min-width: 80px;
-  cursor: pointer;
-  text-align: right;
-  transition: all 0.2s;
+  background: #333;
+  color: #888;
+  border: none;
+  padding: 10px;
+  border-radius: 10px;
+  min-width: 90px;
+  text-align: center;
+  transition: 0.2s;
 }
-.btn-compra small { 
-    display: block; 
-    font-size: 0.7rem; 
-    opacity: 0.7; 
-}
-.btn-compra span { 
-    display: block;
-    font-size: 0.7rem; 
-    font-weight: bold; 
-    text-transform: uppercase;
-}
+.btn-compra small { display: block; font-size: 0.75rem; }
+.btn-compra span { font-size: 0.9rem; font-weight: bold; }
 
 .btn-compra.pode-comprar { 
     background: var(--accent); 
-    color: #064E3B; /* Verde muito escuro para contraste */
-    border-color: var(--accent);
+    color: #000; 
+    box-shadow: 0 0 15px rgba(0, 230, 118, 0.3);
 }
-.btn-compra:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* MODAIS */
-.modal-overlay { background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); display: flex; z-index: 100; }
+/* Modais */
+.modal-overlay { background: rgba(0,0,0,0.9); display: flex; z-index: 100; backdrop-filter: blur(5px);}
 .modal-content {
-    background: #1E293B;
-    border: 1px solid #475569;
-    color: var(--text-primary);
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-    border-radius: 12px;
+    background: #222;
+    border: 1px solid #444;
+    border-radius: 16px;
+    color: white;
 }
