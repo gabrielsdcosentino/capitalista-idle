@@ -1,11 +1,13 @@
 import { AdMob, RewardAdPluginEvents } from '@capacitor-community/admob';
 // --- CONFIGURAÇÃO (DATA) ---
 const CONFIG_NEGOCIOS = [
-  { id: 'limonada', nome: 'Limonada', custoBase: 10, receitaBase: 1, tempoMs: 1000 },
-  { id: 'jornal', nome: 'Entrega de Jornal', custoBase: 60, receitaBase: 4, tempoMs: 3000 },
-  { id: 'lava_jato', nome: 'Lava Jato', custoBase: 700, receitaBase: 15, tempoMs: 6000 },
-  { id: 'pizzaria', nome: 'Pizzaria', custoBase: 2500, receitaBase: 50, tempoMs: 12000 },
-  { id: 'donut', nome: 'Loja de Donuts', custoBase: 10000, receitaBase: 200, tempoMs: 20000 },
+  { id: 'limonada',  nome: 'Limonada',        custoBase: 10,    receitaBase: 1,   tempoMs: 1000,  icone: '🍋' },
+  { id: 'jornal',    nome: 'Jornais',         custoBase: 60,    receitaBase: 4,   tempoMs: 3000,  icone: '📰' },
+  { id: 'lava_jato', nome: 'Lava Jato',       custoBase: 700,   receitaBase: 15,  tempoMs: 6000,  icone: '🚗' },
+  { id: 'pizzaria',  nome: 'Pizzaria',        custoBase: 2500,  receitaBase: 50,  tempoMs: 12000, icone: '🍕' },
+  { id: 'donut',     nome: 'Donuts',          custoBase: 10000, receitaBase: 200, tempoMs: 20000, icone: '🍩' },
+  { id: 'banco',     nome: 'Banco',           custoBase: 100000,receitaBase: 1000,tempoMs: 60000, icone: '🏦' }, // Novo!
+  { id: 'petroleo',  nome: 'Petróleo',        custoBase: 1000000,receitaBase: 5000,tempoMs: 120000,icone: '🛢️' } // Novo!
 ];
 
 // --- ESTADO DO JOGO (STATE) ---
@@ -126,6 +128,8 @@ function criarInterface() {
     div.id = `card-${n.id}`;
     
     div.innerHTML = `
+      <div class="business-icon">${n.icone}</div>
+
       <div style="flex: 1; margin-right: 10px;">
         <div class="info">
           <h3>${n.nome}</h3>
@@ -156,6 +160,17 @@ function atualizarInterface() {
     document.getElementById(`qtd-${n.id}`).innerText = qtd;
     document.getElementById(`rec-${n.id}`).innerText = `${receitaReal.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}/ciclo`;
     document.getElementById(`custo-${n.id}`).innerText = custo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+    const card = document.getElementById(`card-${n.id}`);
+    
+    // Adiciona classe visual se já tiver comprado pelo menos 1
+    if (qtd > 0) {
+        card.classList.add('desbloqueado');
+        card.classList.remove('bloqueado');
+    } else {
+        card.classList.remove('desbloqueado');
+        // card.classList.add('bloqueado'); // Se quiser que fique cinza antes de comprar
+    }
     
     const btn = document.querySelector(`#card-${n.id} .btn-compra`);
     if (jogo.dinheiro >= custo) {
