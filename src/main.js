@@ -10,7 +10,8 @@ const CONFIG_NEGOCIOS = [
 // --- ESTADO DO JOGO (STATE) ---
 let jogo = {
   dinheiro: 0,
-  negocios: {} // Vai guardar { limonada: 0, jornal: 5 ... }
+  negocios: {},
+  upgrades: [] // <--- NOVO: Lista de IDs de upgrades comprados
 };
 
 // Inicializa o estado com 0 para cada negócio
@@ -68,20 +69,31 @@ function loop(tempoAtual) {
   const delta = tempoAtual - ultimoTempo;
   ultimoTempo = tempoAtual;
 
-  // Processa produção automática
   CONFIG_NEGOCIOS.forEach(negocio => {
     const qtd = jogo.negocios[negocio.id];
+    
     if (qtd > 0) {
       acumuladorTempo[negocio.id] += delta;
       
+      // 1. Lógica do Dinheiro
       if (acumuladorTempo[negocio.id] >= negocio.tempoMs) {
-        // Ciclo completou!
-        const ciclosCompletos = Math.floor(acumuladorTempo[negocio.id] / negocio.tempoMs);
-        const lucro = (negocio.receitaBase * qtd) * ciclosCompletos;
-        
-        jogo.dinheiro += lucro;
-        acumuladorTempo[negocio.id] %= negocio.tempoMs; // Guarda o resto do tempo
+        const ciclos = Math.floor(acumuladorTempo[negocio.id] / negocio.tempoMs);
+        jogo.dinheiro += (negocio.receitaBase * qtd) * ciclos;
+        acumuladorTempo[negocio.id] %= negocio.tempoMs;
       }
+
+      // 2. Lógica Visual (Barra de Progresso)
+      const elementoBarra = document.getElementById(`bar-${negocio.id}`);
+      if (elementoBarra) {
+        // Calcula a porcentagem (0 a 100)
+        const porcentagem = (acumuladorTempo[negocio.id] / negocio.tempoMs) * 100;
+        // Aplica na largura
+        elementoBarra.style.width = `${Math.min(porcentagem, 100)}%`;
+      }
+    } else {
+        // Se não tem o negócio, a barra fica vazia
+        const elementoBarra = document.getElementById(`bar-${negocio.id}`);
+        if(elementoBarra) elementoBarra.style.width = '0%';
     }
   });
 
@@ -109,12 +121,20 @@ function criarInterface() {
     div.className = 'business-card';
     div.id = `card-${n.id}`;
     
+    // Layout: Coluna da esquerda (Info + Barra) e Botão na direita
     div.innerHTML = `
-      <div class="info">
-        <h3>${n.nome}</h3>
-        <p>Possui: <span id="qtd-${n.id}">0</span></p>
-        <p>Receita: ${n.receitaBase.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}/s</p>
+      <div style="flex: 1; margin-right: 10px;">
+        <div class="info">
+          <h3>${n.nome}</h3>
+          <p>Possui: <span id="qtd-${n.id}">0</span></p>
+          <p>Receita: ${n.receitaBase.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}</p>
+        </div>
+        
+        <div class="progresso-container">
+            <div id="bar-${n.id}" class="progresso-fill"></div>
+        </div>
       </div>
+
       <button class="btn-compra" onclick="window.tentarComprar('${n.id}')">
         Comprar<br>
         <small id="custo-${n.id}">---</small>
@@ -129,19 +149,48 @@ function atualizarInterface() {
     const custo = calcularCusto(n.id);
     const qtd = jogo.negocios[n.id];
     
+    // CORREÇÃO AQUI: Mostra o lucro real (Qtd * ReceitaBase)
+    const receitaTotal = n.receitaBase * (qtd || 1); // Se for 0, mostra a base como previsão
+    
     document.getElementById(`qtd-${n.id}`).innerText = qtd;
     document.getElementById(`custo-${n.id}`).innerText = custo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     
-    // Muda a cor do botão se puder comprar
-    const btn = document.querySelector(`#card-${n.id} .btn-compra`);
+    // Atualiza o texto da receita também!
+    // Precisamos achar o elemento <p> que tem a receita. 
+    // Como não demos ID pra ele antes, vamos usar o querySelector no card.
+    const card = document.getElementById(`card-${n.id}`);
+    const pReceita = card.querySelector('.info p:nth-child(3)'); // Pega o terceiro parágrafo
+    pReceita.innerText = `Receita: ${receitaTotal.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}/ciclo`;
+
+    // Lógica do Botão (Visual)
+    const btn = card.querySelector('.btn-compra');
     if (jogo.dinheiro >= custo) {
       btn.classList.add('pode-comprar');
       btn.classList.remove('bloqueado');
+      btn.disabled = false;
     } else {
       btn.classList.remove('pode-comprar');
+      btn.classList.add('bloqueado'); // Adicione isso no CSS se quiser que fique cinza escuro
+      btn.disabled = true; // Impede o clique
     }
   });
 }
+window.comprarUpgrade = function(tipo) {
+    if (tipo === 'limonada' && jogo.dinheiro >= 100 && !jogo.upgrades.includes('limao_x2')) {
+        jogo.dinheiro -= 100;
+        jogo.upgrades.push('limao_x2');
+
+        // Aplica visualmente
+        document.getElementById('upg-limao').classList.add('comprado');
+
+        // Dobra a receita da limonada na configuração!
+        const limonada = CONFIG_NEGOCIOS.find(n => n.id === 'limonada');
+        limonada.receitaBase *= 2; 
+
+        atualizarInterface();
+        guardarJogo();
+    }
+};
 
 // --- INICIALIZAÇÃO ---
 window.cliqueManual = cliqueManual; // <--- Isso conecta o botão do HTML à função JS

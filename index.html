@@ -15,10 +15,18 @@
 
         <div id="area-scroll">
             <button id="btn-clique" class="btn-manual" onclick="window.cliqueManual()">Trabalhar (+R$ 1)</button>
-
+            <div id="area-upgrades" style="padding: 10px; display: flex; gap: 10px; overflow-x: auto;">
+                <button id="upg-limao" onclick="comprarUpgrade('limonada')" class="btn-upgrade">
+                    🍋 Super Limões (R$ 100)<br>Lucro x2
+                </button>
+            </div>
+            <hr style="border-color: #333;">
             <div id="lista-negocios"></div>
         </div>
     </div>
     <script type="module" src="/src/main.js"></script>
+    <button onclick="localStorage.clear(); location.reload();" style="background: red; color: white; margin-top: 50px;">
+    [DEV] RESETAR TUDO
+</button>
 </body>
 </html>

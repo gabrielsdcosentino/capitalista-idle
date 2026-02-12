@@ -86,3 +86,38 @@ h1 { margin: 0; font-size: 1.2rem; opacity: 0.7; }
   cursor: pointer;
 }
 .btn-compra.pode-comprar { background: var(--accent); color: black; font-weight: bold; }
+/* --- BARRAS DE PROGRESSO --- */
+.progresso-container {
+  width: 100%;
+  height: 10px;
+  background-color: #333;
+  border-radius: 5px;
+  margin-top: 8px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progresso-fill {
+  height: 100%;
+  background-color: var(--accent); /* Usa a cor verde definida lá em cima */
+  width: 0%; /* O JavaScript vai mudar isso aqui 60 vezes por segundo */
+  transition: width 0.1s linear; /* Deixa o movimento suave */
+}
+
+/* Efeito de brilho quando completa */
+.progresso-fill.cheio {
+  filter: brightness(1.5);
+}
+.btn-upgrade {
+    background: #9C27B0; /* Roxo para diferenciar */
+    color: white;
+    border: 1px solid #7B1FA2;
+    padding: 10px;
+    border-radius: 8px;
+    min-width: 120px;
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+.btn-upgrade.comprado {
+    display: none; /* Some depois de comprar */
+}
